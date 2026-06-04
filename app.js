@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
+const Book = require("./models/book");
 
 const app = express();
 
@@ -21,37 +22,33 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/books", (req, res, next) => {
-  const books = [
-    {
-      _id: "oeihfzeoi",
-      title: "Le Seigneur des Anneaux",
-      author: "J.R.R. Tolkien",
-      imageUrl: "",
-      year: 1954,
-      genre: "Fantasy",
-      ratings: [{ userId: "qsomihvqios", grade: 5 }],
-      averageRating: 5,
-      userId: "qsomihvqios",
-    },
-    {
-      _id: "oeihfzeomoihi",
-      title: "Harry Potter",
-      author: "J.K. Rowling",
-      imageUrl: "",
-      year: 1997,
-      genre: "Fantasy",
-      ratings: [{ userId: "qsomihvqios", grade: 4 }],
-      averageRating: 4,
-      userId: "qsomihvqios",
-    },
-  ];
-  res.status(200).json(books);
+app.post("/api/books", (req, res, next) => {
+  const book = new Book({
+    title: req.body.title,
+    author: req.body.author,
+    imageUrl: req.body.imageUrl,
+    year: req.body.year,
+    genre: req.body.genre,
+    ratings: req.body.ratings,
+    averageRating: req.body.averageRating,
+    userId: req.body.userId,
+  });
+  book
+    .save()
+    .then(() => res.status(201).json({ message: "Book saved successfully!" }))
+    .catch((error) => res.status(400).json({ error: error }));
 });
 
-app.post("/api/books", (req, res, next) => {
-  console.log(req.body);
-  res.status(201).json({ message: "Book created successfully!" });
+app.get("/api/books", (req, res, next) => {
+  Book.find()
+    .then((books) => res.status(200).json(books))
+    .catch((error) => res.status(400).json({ error: error }));
+});
+
+app.get("/api/books/:id", (req, res, next) => {
+  Book.findOne({ _id: req.params.id })
+    .then((book) => res.status(200).json(book))
+    .catch((error) => res.status(404).json({ error: error }));
 });
 
 module.exports = app;
