@@ -2,14 +2,8 @@ const Book = require("../models/book");
 
 exports.createBook = (req, res, next) => {
   const book = new Book({
-    title: req.body.title,
-    author: req.body.author,
-    imageUrl: req.body.imageUrl,
-    year: req.body.year,
-    genre: req.body.genre,
-    ratings: req.body.ratings,
-    averageRating: req.body.averageRating,
-    userId: req.body.userId,
+    ...req.body,
+    userId: req.auth.userId,
   });
   book
     .save()
@@ -30,24 +24,33 @@ exports.getOneBook = (req, res, next) => {
 };
 
 exports.modifyBook = (req, res, next) => {
-  const book = new Book({
-    _id: req.params.id,
-    title: req.body.title,
-    author: req.body.author,
-    imageUrl: req.body.imageUrl,
-    year: req.body.year,
-    genre: req.body.genre,
-    ratings: req.body.ratings,
-    averageRating: req.body.averageRating,
-    userId: req.body.userId,
-  });
-  Book.updateOne({ _id: req.params.id }, book)
-    .then(() => res.status(200).json({ message: "Book updated successfully!" }))
-    .catch((error) => res.status(400).json({ error: error }));
+  Book.findOne({ _id: req.params.id })
+    .then((book) => {
+      if (!book) {
+        return res.status(404).json({ error: "Book not found!" });
+      }
+      if (book.userId !== req.auth.userId) {
+        return res.status(401).json({ error: "Unauthorized request!" });
+      }
+      Book.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
+        .then(() => res.status(200).json({ message: "Book updated successfully!" }))
+        .catch((error) => res.status(400).json({ error: error }));
+    })
+    .catch((error) => res.status(500).json({ error: error }));
 };
 
 exports.deleteBook = (req, res, next) => {
-  Book.deleteOne({ _id: req.params.id })
-    .then(() => res.status(200).json({ message: "Book deleted!" }))
-    .catch((error) => res.status(400).json({ error: error }));
+  Book.findOne({ _id: req.params.id })
+    .then((book) => {
+      if (!book) {
+        return res.status(404).json({ error: "Book not found!" });
+      }
+      if (book.userId !== req.auth.userId) {
+        return res.status(401).json({ error: "Unauthorized request!" });
+      }
+      Book.deleteOne({ _id: req.params.id })
+        .then(() => res.status(200).json({ message: "Book deleted!" }))
+        .catch((error) => res.status(400).json({ error: error }));
+    })
+    .catch((error) => res.status(500).json({ error: error }));
 };
