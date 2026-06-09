@@ -1,9 +1,12 @@
 const Book = require("../models/book");
 
 exports.createBook = (req, res, next) => {
+  const bookObject = JSON.parse(req.body.book);
+  const url = req.protocol + "://" + req.get("host");
   const book = new Book({
-    ...req.body,
+    ...bookObject,
     userId: req.auth.userId,
+    imageUrl: url + "/images/" + req.file.filename,
   });
   book
     .save()
@@ -32,7 +35,18 @@ exports.modifyBook = (req, res, next) => {
       if (book.userId !== req.auth.userId) {
         return res.status(401).json({ error: "Unauthorized request!" });
       }
-      Book.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
+      let bookObject;
+      if (req.file) {
+        const url = req.protocol + "://" + req.get("host");
+        const bookData = JSON.parse(req.body.book);
+        bookObject = {
+          ...bookData,
+          imageUrl: url + "/images/" + req.file.filename,
+        };
+      } else {
+        bookObject = { ...req.body };
+      }
+      Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
         .then(() => res.status(200).json({ message: "Book updated successfully!" }))
         .catch((error) => res.status(400).json({ error: error }));
     })
