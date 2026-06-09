@@ -1,4 +1,6 @@
 const Book = require("../models/book");
+const fs = require("fs");
+const path = require("path");
 
 exports.createBook = (req, res, next) => {
   const bookObject = JSON.parse(req.body.book);
@@ -62,9 +64,13 @@ exports.deleteBook = (req, res, next) => {
       if (book.userId !== req.auth.userId) {
         return res.status(401).json({ error: "Unauthorized request!" });
       }
-      Book.deleteOne({ _id: req.params.id })
-        .then(() => res.status(200).json({ message: "Book deleted!" }))
-        .catch((error) => res.status(400).json({ error: error }));
+      const filename = book.imageUrl.split("/images/")[1];
+      fs.unlink(path.join(__dirname, "..", "images", filename), (err) => {
+        if (err) console.log("Error deleting image:", err);
+        Book.deleteOne({ _id: req.params.id })
+          .then(() => res.status(200).json({ message: "Book deleted!" }))
+          .catch((error) => res.status(400).json({ error: error }));
+      });
     })
     .catch((error) => res.status(500).json({ error: error }));
 };
