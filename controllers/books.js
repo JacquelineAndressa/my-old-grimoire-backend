@@ -74,3 +74,31 @@ exports.deleteBook = (req, res, next) => {
     })
     .catch((error) => res.status(500).json({ error: error }));
 };
+
+exports.rateBook = (req, res, next) => {
+  const grade = req.body.rating;
+  const userId = req.auth.userId;
+
+  Book.findOne({ _id: req.params.id })
+    .then((book) => {
+      if (!book) {
+        return res.status(404).json({ error: "Book not found!" });
+      }
+
+      const alreadyRated = book.ratings.find((r) => r.userId === userId);
+      if (alreadyRated) {
+        return res.status(400).json({ error: "You have already rated this book!" });
+      }
+
+      book.ratings.push({ userId: userId, grade: grade });
+
+      const totalGrades = book.ratings.reduce((sum, r) => sum + r.grade, 0);
+      book.averageRating = totalGrades / book.ratings.length;
+
+      book
+        .save()
+        .then(() => res.status(200).json(book))
+        .catch((error) => res.status(400).json({ error: error }));
+    })
+    .catch((error) => res.status(500).json({ error: error }));
+};
