@@ -79,6 +79,10 @@ exports.rateBook = (req, res, next) => {
   const grade = req.body.rating;
   const userId = req.auth.userId;
 
+  if (grade < 0 || grade > 5) {
+    return res.status(400).json({ error: "Rating must be between 0 and 5!" });
+  }
+
   Book.findOne({ _id: req.params.id })
     .then((book) => {
       if (!book) {
@@ -101,4 +105,13 @@ exports.rateBook = (req, res, next) => {
         .catch((error) => res.status(400).json({ error: error }));
     })
     .catch((error) => res.status(500).json({ error: error }));
+};
+
+exports.getBestRating = (req, res, next) => {
+  Book.find()
+    .then((books) => {
+      const bestBooks = books.sort((a, b) => b.averageRating - a.averageRating).slice(0, 3);
+      res.status(200).json(bestBooks);
+    })
+    .catch((error) => res.status(400).json({ error: error }));
 };
