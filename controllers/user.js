@@ -3,11 +3,12 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
 exports.signup = (req, res, next) => {
+  if (!req.body.password || req.body.password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters long." });
+  }
+
   bcrypt.hash(req.body.password, 10).then((hash) => {
-    const user = new User({
-      email: req.body.email,
-      password: hash,
-    });
+    const user = new User({ email: req.body.email, password: hash });
     user
       .save()
       .then(() => res.status(201).json({ message: "User added successfully!" }))
@@ -16,7 +17,7 @@ exports.signup = (req, res, next) => {
         if (code === 11000) {
           res.status(400).json({ error: "This email is already in use." });
         } else {
-          res.status(500).json({ error: error });
+          res.status(400).json({ error: error.message });
         }
       });
   });

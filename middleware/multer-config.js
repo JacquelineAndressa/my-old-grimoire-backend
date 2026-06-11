@@ -16,7 +16,9 @@ module.exports = (req, res, next) => {
     if (err) return next(err);
     if (!req.file) return next();
 
-    const filename = req.file.originalname.split(" ").join("_").split(".")[0] + Date.now() + ".webp";
+    const originalName = path.parse(req.file.originalname).name;
+    const safeName = originalName.replace(/\s+/g, "_");
+    const filename = `${safeName}_${Date.now()}.webp`;
 
     sharp(req.file.buffer)
       .resize(800, 500, { fit: "inside", withoutEnlargement: true })
